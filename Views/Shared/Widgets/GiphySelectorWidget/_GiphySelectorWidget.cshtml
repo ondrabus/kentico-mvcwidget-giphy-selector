@@ -1,0 +1,22 @@
+﻿
+@model KenticoCommunity.GiphySelectorWidget.GiphySelectorWidgetViewModel
+
+@if (Context.Kentico().PageBuilder().EditMode)
+{
+    <div class="giphy-selector-wrapper">
+        @{
+            Html.RenderPartial("Widgets/GiphySelectorWidget/_GiphySelectorSearchBox", new KenticoCommunity.GiphySelectorWidget.GiphySelectorSearchBoxModel
+            {
+                PropertyName = nameof(Model.Url),
+                ApiKey = Model.ApiKey
+            });
+        }
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.Url))
+{
+    <img src="@Model.Url" alt="@Model.AlternativeText" />
+}
+
+

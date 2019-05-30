@@ -1,0 +1,76 @@
+﻿
+@model KenticoCommunity.GiphySelectorWidget.GiphySelectorSearchBoxModel
+@using (Html.Kentico().BeginInlineEditor("giphy-selector-search-box-editor", Model.PropertyName))
+{
+    <div id="vueapp">
+        Search: <input type="text" v-model="searchQuery" />
+        <ul v-if="images.length > 0">
+            <li v-for="image in images">
+                <img :src="image" alt="" v-on:click="selectedImage = image" />
+            </li>
+        </ul>
+    </div>
+
+    <script type="text/javascript">
+        if (!window.giphySelectorSearchBoxApp) {
+
+            window.kentico.pageBuilder.registerInlineEditor("giphy-selector-search-box-editor", {
+                init: function (options) {
+                    window.giphySelectorSearchEditor = options.editor;
+                }
+            });
+
+        }
+
+        window.giphySelectorSearchBoxApp = new Vue({
+            el: '#vueapp',
+            data: {
+                searchQuery: null,
+                searchTimeout: null,
+                images: [],
+                selectedImage: null
+            },
+            methods: {
+                executeSearch: function (val) {
+                    fetch('https://api.giphy.com/v1/gifs/search?q=' + val + '&limit=5&api_key=@Model.ApiKey', { mode: 'cors' })
+                        .then(response => response.json())
+                        .then(response => {
+                            let data = response.data;
+                            this.$data.images = data.map(item => item.images.fixed_height.url);
+                            })
+                        .catch(function (error) {
+                            console.log(error);
+                        });
+                }
+            },
+            watch: {
+                selectedImage: function (val) {
+                    if (!val) {
+                        return;
+                    }
+
+                    let event = new CustomEvent("updateProperty", {
+                        detail: {
+                            value: val,
+                            name: "@Model.PropertyName"
+                        }
+                    });
+                    window.giphySelectorSearchEditor.dispatchEvent(event);
+
+                    this.selectedImage = null;
+                    this.images = [];
+                },
+                searchQuery: function (val) {
+                    if (this.searchTimeout) {
+                        clearTimeout(this.searchTimeout);
+                    }
+                    this.searchTimeout = setTimeout(() => {
+                        this.executeSearch(val);
+                    }, 500);
+                }
+            }
+        });
+
+
+    </script>
+}
